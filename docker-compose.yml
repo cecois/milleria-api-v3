@@ -1,23 +1,23 @@
 version: '3'
 services:
-  api:
-    image: milleria-api
-    build: .
-    environment:
-      - VIRTUAL_HOST=api.milleria.org,api.wompupthejams.com
-    networks:
-      - backend
-    ports:
-      - "3030:3030"
-    volumes:
-      - ./:/usr/src/app
+  api:
+    image: milleria-api
+    build: .
+    networks:
+      - backend
+    environment:
+      - VIRTUAL_HOST=api.milleria.org,api.wompupthejams.com
+    ports:
+      - "3030:3030"
+    volumes:
+      - ./:/usr/src/app
 
-  web-cli:
-    image: milleria-api
-    networks:
-      - backend
-    command: sh
+  web-cli:
+    image: milleria-api
+    networks:
+      - backend
+    command: sh
 
 networks:
-  backend:
-    driver: bridge
+  backend:
+   driver: bridge
