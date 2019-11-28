@@ -1,8 +1,10 @@
-version: '3'
+version: '2'
 services:
   api:
     image: milleria-api
     build: .
+    environment:
+      - VIRTUAL_HOST=api.milleria.org,api.wompupthejams.com
     networks:
       - backend
     ports:
