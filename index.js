@@ -315,6 +315,11 @@ APP.get('/fake/:which', (req, res) => {
 		res.send(JSON.parse(D))
 	})
 })
+APP.get('/about', (req, res) => {
+	var F = {name:"Milleria API","description":"This is a private API, largely, that supports much of the work at *.milleria.org"}
+	
+		res.jsonp(F)
+})
 APP.get('/geocode/:loc', (req, res) => {
 	res.setHeader('Content-Type', 'application/json');
 	// allow cors
