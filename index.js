@@ -1,5 +1,5 @@
 const CONFIG = require("./Config.json")
-const EXPRESS = require('express')
+,EXPRESS = require('express')
 	, REQUEST = require('request')
 	, ASYNC = require('async')
 	, MONGO = require('mongodb').MongoClient
@@ -10,7 +10,11 @@ const EXPRESS = require('express')
 	, APP = EXPRESS()
 	, MOMENT = require('moment')
 	, BODYPARSER = require('body-parser')
-	, NOGO = require('node-geocoder');
+	, NOGO = require('node-geocoder')
+,TURFSIMPLE = require('@turf/simplify').default
+	;
+
+
 APP.use(CORS());
 APP.use(BODYPARSER({
 	limit: '50000mb'
@@ -131,7 +135,7 @@ var _send = async (D) => {
 				const db = client.db('cbb');
 				var col = db.collection('geo');
 				col.insertMany([D]).then((r) => {
-					// db.close();
+					client.close();
 					resolve([D]);
 				});
 			});
@@ -152,7 +156,7 @@ var _update_missing = async (cid,ctyp) => {
 						"fixed": true
 					}
 				}).then((r) => {
-					// db.close();
+					client.close();
 					resolve(r);
 				});
 				// col.insertMany([D]).then((r) => {
@@ -490,6 +494,25 @@ APP.get('/geocode/:loc', (req, res) => {
 		});
 	} //else.coordinates
 }) //.get/geocode
+
+/* 🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬 */
+
+APP.get('/geoms/simple', (req, res) => {
+	res.setHeader('Content-Type', 'application/json');
+	// allow cors
+	res.header("Access-Control-Allow-Origin", "*");
+
+let geoms = []
+	var fils = __.each(req.query.q.split(","), (p) => {
+		if(p.indexOf('null')<0){
+					geoms.push(JSON.parse(FS.readFileSync(CONFIG.geomdir+p.replace(':','.')+'.geojson')))
+				}
+			}); //each
+res.send(JSON.stringify(__.compact(geoms)))
+})//simple
+
+	/* 🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬 */
+
 APP.get('/geoms/:app', (req, res) => {
 	console.log('req', req);
 	res.setHeader('Content-Type', 'application/json');
@@ -506,11 +529,11 @@ APP.get('/geoms/:app', (req, res) => {
 			FS.readFile('./offline/geojson.geojson', (e, d) => {
 				if (e) throw Error(e);
 				var J = JSON.parse(d);
-				console.log("J", J)
+				// console.log("J", J)
 				res.jsonp(J.features);
 			})
 		} //if.offlien
-		if (req.params.app == 'cbb') {
+		// if (req.params.app == 'cbb') {
 			var clauses = __.map(req.query.q.split(","), (p) => {
 				var pa = p.split(":")
 					, pat = '';
@@ -546,50 +569,62 @@ APP.get('/geoms/:app', (req, res) => {
 			// Connection URL
 			// var url = 'mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?authSource=admin&replicaSet=CL00-shard-0&ssl=true';
 			var url = 'mongodb://'+CONFIG.mongo_connect_string+'@cbbcluster0-shard-00-00-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-01-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-02-wdqp7.gcp.mongodb.net:27017/test?ssl=true&replicaSet=cbbcluster0-shard-0&authSource=admin&retryWrites=true';
+			console.log("url", url);
 			// Use connect method to connect to the Server
 			MONGO.connect(url, (err, client) => {
 				console.log("Connected correctly to server");
+				if(err){console.log('ERROR DOE:',err)}
 				const db = client.db('cbb');
 				var col = db.collection('geo');
 				col.find(query).limit(999999).toArray((err, docs) => {
 					if (err) {
+						client.close();
 						res.send(JSON.stringify(err));
+					} else if(docs.length>1){
+client.close();
+let resp = {success:false,"msg":"conflicting id/geom coupling for "+qt+":"+qv}
+						res.send(JSON.stringify(resp));
 					} else {
-						// res.send(JSON.stringify(docs));
-						res.jsonp(docs);
-						// db.close();
-					}
+							geojson=docs
+						}
+						
+					// }
+						client.close();
+						res.jsonp(geojson);
 				}); //.find.toarray
 			}); //.connect
-		} //test of app==cbb (no others for now but later maybe)
-		else if (req.params.app == 'garbage') {
-			// Connection URL
-			// var url = 'mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?authSource=admin&replicaSet=CL00-shard-0&ssl=true';
-			var url = 'mongodb://'+CONFIG.mongo_connect_string+'@cbbcluster0-shard-00-00-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-01-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-02-wdqp7.gcp.mongodb.net:27017/test?ssl=true&replicaSet=cbbcluster0-shard-0&authSource=admin&retryWrites=true';
-			// Use connect method to connect to the Server
-			MONGO.connect(url, (err, client) => {
-				console.log("Connected correctly to server");
-				const db = client.db('garbage');
-				var col = db.collection('guesses');
-				col.find({
-					'properties.class': {
-						$ne: 'RT'
-					}
-				}).limit(999999).toArray((err, docs) => {
-					if (err) {
-						res.send(JSON.stringify(err));
-					} else {
-						res.jsonp({
-							"type": "FeatureCollection"
-							, "features": docs
-						});
-						// db.close();
-					}
-				}); //.find.toarray
-			}); //.connect
-		} //if.garbage
+		//} //test of app==cbb (no others for now but later maybe)
+		// else if (req.params.app == 'garbage') {
+		// 	// Connection URL
+		// 	// var url = 'mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?authSource=admin&replicaSet=CL00-shard-0&ssl=true';
+		// 	var url = 'mongodb://'+CONFIG.mongo_connect_string+'@cbbcluster0-shard-00-00-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-01-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-02-wdqp7.gcp.mongodb.net:27017/test?ssl=true&replicaSet=cbbcluster0-shard-0&authSource=admin&retryWrites=true';
+		// 	// Use connect method to connect to the Server
+		// 	MONGO.connect(url, (err, client) => {
+		// 		console.log("Connected correctly to server");
+		// 		const db = client.db('garbage');
+		// 		var col = db.collection('guesses');
+		// 		col.find({
+		// 			'properties.class': {
+		// 				$ne: 'RT'
+		// 			}
+		// 		}).limit(999999).toArray((err, docs) => {
+		// 			if (err) {
+		// 				res.send(JSON.stringify(err));
+		// 			} else {
+		// 				res.jsonp({
+		// 					"type": "FeatureCollection"
+		// 					, "features": docs
+		// 				});
+		// 				// db.close();
+		// 			}
+		// 		}); //.find.toarray
+		// 	}); //.connect
+		// } //if.garbage
 	} //else of params test
-}) //APP.get
+}) //APP.geoms.cbb
+
+/* 🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬 */
+
 APP.get('/missings/:which', (req, res) => {
 	res.setHeader('Content-Type', 'application/json');
 	// allow cors
