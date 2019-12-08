@@ -2,13 +2,18 @@ version: '3'
 services:
   api:
     image: milleria-api
+    container_name: api
     build: .
     networks:
       - backend
+    env_file:
+      - local.env
     environment:
       - VIRTUAL_HOST=api.milleria.org,api.wompupthejams.com
     ports:
       - "3030:3030"
+    expose:
+      - "80"
     volumes:
       - ./:/usr/src/app
 

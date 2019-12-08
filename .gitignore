@@ -63,3 +63,4 @@ typings/
 # local/app config
 Config.json
 the-geoms
+local.env
