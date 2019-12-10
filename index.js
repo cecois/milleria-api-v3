@@ -39,95 +39,70 @@ const options = {
 	, format: 'json'
 };
 const GEOC = NOGO(options);
-var _getmax = async (t) => {
+var _GETMAX = async (t) => {
+	console.log("t in api.getmax", t);
 	return new Promise(function (resolve, reject) {
 			// const url = "mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?ssl=true&replicaSet=CL00-shard-0&authSource=admin";
-			const url = "mongodb://"+CONFIG.mongo_connect_string+"@cbbcluster0-shard-00-00-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-01-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-02-wdqp7.gcp.mongodb.net:27017/test?ssl=true&replicaSet=cbbcluster0-shard-0&authSource=admin&retryWrites=true";
-			var Q = {
-				"*": "*"
-			}
+			// const url = "mongodb://"+CONFIG.mongo_connect_string+"@cbbcluster0-shard-00-00-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-01-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-02-wdqp7.gcp.mongodb.net:27017/test?ssl=true&replicaSet=cbbcluster0-shard-0&authSource=admin&retryWrites=true";
+			let typ=null;
 			switch (t.toLowerCase()) {
 				case 'point':
-					Q = {
-						"geometry.type": 'Point'
-					}
+					typ=t.toLowerCase();
 					break;
 				case 'polygon':
-					// Q={$or:[{'geometry.type':'Polygon'},{'geometry.type':'MultiPolygon'}]}
-					Q = {
-						$and: [{
-							'geometry.type': {
-								$ne: "Point"
-							}
-						}, {
-							'geometry.type': {
-								$ne: "LineString"
-							}
-						}, {
-							'geometry.type': {
-								$ne: "MultiLineString"
-							}
-						}]
-					}
+					typ='poly'
 					break;
 				case 'multipolygon':
-					// Q={$or:[{'geometry.type':'Polygon'},{'geometry.type':'MultiPolygon'}]}
-					Q = {
-						$and: [{
-							'geometry.type': {
-								$ne: "Point"
-							}
-						}, {
-							'geometry.type': {
-								$ne: "LineString"
-							}
-						}, {
-							'geometry.type': {
-								$ne: "MultiLineString"
-							}
-						}]
-					}
+					typ='poly'
 					break;
 				case 'multilinestring':
-					Q = {
-						$or: [{
-							'geometry.type': 'Linestring'
-						}, {
-							'geometry.type': 'MultiLineString'
-						}]
-					}
+					typ='line'
 					break;
 				case 'linestring':
-					Q = {
-						$or: [{
-							'geometry.type': 'Linestring'
-						}, {
-							'geometry.type': 'MultiLineString'
-						}]
-					}
+					typ='line'
 					break;
 				default:
 					// statements_def
 					break;
-			}
-			console.log("Q", Q)
-			MONGO.connect(url, (err, client) => {
-				const db = client.db('cbb');
-				var col = db.collection('geo');
-				var sort = {
-					"_id": -1
-				};
-				col.find(Q).sort(sort).limit(1).toArray((e, r) => {
-					var prevmax = (__.first(r).properties.cartodb_id)
-					console.log("prevmax", prevmax);
-					var next = parseInt(prevmax) + 1
-					resolve(next);
-				});
-			});
+			}//switch.type
+
+// get alldafiles, filter by type, map to number, get max
+let max = __.last(__.map(__.filter(FS.readdirSync(CONFIG.geomdir),(f)=>{return f.split(".")[0]==typ}),(b)=>{return Number(b.split(".")[1]);}).sort((a,b)=>{return a-b}))+1
+resolve(max)
+			
 		} //promise
 	)
 } //send
-var _send = async (D) => {
+var _SEND = async (D) => {
+	return new Promise(function (resolve, reject) {
+			
+			let typ=null;
+			switch (D.geometry.type.toLowerCase()) {
+				case 'point':
+					typ=t.toLowerCase();
+					break;
+				case 'polygon':
+					typ='poly'
+					break;
+				case 'multipolygon':
+					typ='poly'
+					break;
+				case 'multilinestring':
+					typ='line'
+					break;
+				case 'linestring':
+					typ='line'
+					break;
+				default:
+					// statements_def
+					break;
+			}//switch.type
+
+			resolve(FS.writeFileSync(CONFIG.geomdir+typ+'.'+D.properties.cartodb_id+'.geojson',JSON.stringify(D)))
+		} //promise
+	)
+} //send
+var _sendP = async (D) => {
 	return new Promise(function (resolve, reject) {
 			// const url = "mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?ssl=true&replicaSet=CL00-shard-0&authSource=admin";
 			const url = "mongodb://"+CONFIG.mongo_connect_string+"@cbbcluster0-shard-00-00-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-01-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-02-wdqp7.gcp.mongodb.net:27017/test?ssl=true&replicaSet=cbbcluster0-shard-0&authSource=admin&retryWrites=true";
@@ -232,11 +207,6 @@ APP.post('/geocode/submit/garbage', async (req, res) => {
 	});
 	// }
 });
-APP.get('/test/_getmax/:which', async (req, res) => {
-	var F = req.params.which
-	var max = await _getmax(F);
-	res.send(max)
-})
 APP.post('/geocode/batch', async (req, res) => {
 	res.header("Access-Control-Allow-Origin", "*");
 	console.log("plucking addresses...")
@@ -292,6 +262,27 @@ APP.post('/geocode/batch', async (req, res) => {
 		});
 }); //.post
 APP.post('/geocode/submit/cbb', async (req, res) => {
+	res.header("Access-Control-Allow-Origin", "*");
+	var doc = req.body;
+	var count = (doc.properties.name.match(/,/g) || []).length;
+	if (doc.properties.anno == null) {
+		res.send("empty anno")
+	} else if (count >= 3) {
+		res.send("probably default properties.name value (3+ commas)")
+	} else {
+		if (!doc.properties.cartodb_id) {
+			console.log("getting max id with doc.geometry.type", doc.geometry.type);
+			doc.properties.cartodb_id = await _GETMAX(doc.geometry.type);
+			console.log("doc.properties after getmax:", doc.properties);
+		}
+		// const url = "mongodb://"+CONFIG.mongo_connect_string+"@cbbcluster0-shard-00-00-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-01-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-02-wdqp7.gcp.mongodb.net:27017/test?ssl=true&replicaSet=cbbcluster0-shard-0&authSource=admin&retryWrites=true";
+		var insrt = await _SEND(doc);
+		res.send({
+			response: insrt
+		});
+	}
+});
+APP.post('/geocode/submitOG/cbb', async (req, res) => {
 	res.header("Access-Control-Allow-Origin", "*");
 	var doc = req.body;
 	var count = (doc.properties.name.match(/,/g) || []).length;
