@@ -98,7 +98,8 @@ var _SEND = async (D) => {
 					break;
 			}//switch.type
 
-			resolve(FS.writeFileSync(CONFIG.geomdir+typ+'.'+D.properties.cartodb_id+'.geojson',JSON.stringify(D)))
+FS.writeFileSync(CONFIG.geomdir+typ+'.'+D.properties.cartodb_id+'.geojson',JSON.stringify(D))
+			resolve(D)
 		} //promise
 	)
 } //send
