@@ -79,7 +79,7 @@ var _SEND = async (D) => {
 			let typ=null;
 			switch (D.geometry.type.toLowerCase()) {
 				case 'point':
-					typ=t.toLowerCase();
+					typ='point';
 					break;
 				case 'polygon':
 					typ='poly'
