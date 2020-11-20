@@ -62,3 +62,4 @@ typings/
 
 # local/app config
 Config.json
+.DS_Store
