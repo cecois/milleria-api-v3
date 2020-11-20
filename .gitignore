@@ -64,3 +64,4 @@ typings/
 Config.json
 the-geoms
 local.env
+.DS_Store
