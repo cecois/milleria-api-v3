@@ -112,13 +112,13 @@ const _LOGTRACK = async(K) => {
 		return new Promise(function(resolve, reject) {
 				// let K = D
 				// console.log(__.first(__.flatten(K).features));
-				console.log(`${K.features.length} total features`)
+				// console.log(`${K.features.length} total features`)
 				let f = __.first(K.features)
 				let ff = `${f.properties.time}_${f.properties.name}`.trim().replace(new RegExp(' ', 'g'), '-').replace(new RegExp(':', 'g'), '-')
 
 				let fn = `${CONFIG.ebltrackdir}/${ff}.geojson`
 				FS.exists(fn, (exists) => {
-					console.log(exists ? `${fn} exists already` : `saving ${fn}...`);
+					// console.log(exists ? `${fn} exists already` : `saving ${fn}...`);
 					exists ? resolve({
 						success: false,
 						msg: 'API is certain this one exists already'
@@ -245,7 +245,7 @@ const _sendP = async(D) => {
 	});*/
 APP.post('/geocode/batch', async(req, res) => {
 	res.header("Access-Control-Allow-Origin", "*");
-	console.log("plucking addresses...")
+	// console.log("plucking addresses...")
 	const obj = [{
 			address: "216 e. 2nd st, tipton, ia",
 			plant: '216plant',
@@ -259,10 +259,10 @@ APP.post('/geocode/batch', async(req, res) => {
 	}]
 		// var addresses = req.body;
 	var addresses = __.pluck(obj, 'address');
-	console.log("sending to geocoder...")
+	// console.log("sending to geocoder...")
 	GEOC.batchGeocode(addresses)
 		.then(function(resp) {
-			console.log("reassociating...")
+			// console.log("reassociating...")
 			let reassociated = __.map(resp, (d) => {
 				const j = d.value[0];
 				// console.log("j",j)
@@ -290,7 +290,7 @@ APP.post('/geocode/batch', async(req, res) => {
 				"type": "FeatureCollection",
 				"features": reassociated
 			}
-			console.log("returning orsp:", orsp)
+			// console.log("returning orsp:", orsp)
 			res.json(JSON.stringify(orsp)) //send
 		})
 		.catch(function(err) {
@@ -307,9 +307,9 @@ APP.post('/geocode/submit/cbb', async(req, res) => {
 		res.send("probably default properties.name value (3+ commas)")
 	} else {
 		if (!doc.properties.cartodb_id) {
-			console.log("getting max id with doc.geometry.type", doc.geometry.type);
+			// console.log("getting max id with doc.geometry.type", doc.geometry.type);
 			doc.properties.cartodb_id = await _GETMAX(doc.geometry.type);
-			console.log("doc.properties after getmax:", doc.properties);
+			// console.log("doc.properties after getmax:", doc.properties);
 		}
 		// const url = "mongodb://"+CONFIG.mongo_connect_string+"@cbbcluster0-shard-00-00-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-01-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-02-wdqp7.gcp.mongodb.net:27017/test?ssl=true&replicaSet=cbbcluster0-shard-0&authSource=admin&retryWrites=true";
 		var insrt = await _SEND(doc);
@@ -440,7 +440,7 @@ APP.get('/geocode/:loc', (req, res) => {
 		var Q = {
 			"incoming": req.params.loc
 		}
-		console.log("Q:", Q)
+		// console.log("Q:", Q)
 		var R = {
 				Q: Q.incoming
 			} //~empty response obj
@@ -517,7 +517,7 @@ APP.get('/geocode/:loc', (req, res) => {
 			}
 			res.jsonp(o)
 		} else if (typ == "file") {
-			console.log("type is fil")
+			// console.log("type is fil")
 			var o = {}
 			o.type = "Feature"
 			o.geometry = "well get this frm local file", o.properties = {
@@ -573,7 +573,7 @@ APP.get('/geocode/:loc', (req, res) => {
 						res.jsonp(caged);
 					} else {
 						// if it's not coming from opencage, we gotta move some things around
-						console.log("response frm nominatim", body);
+						// console.log("response frm nominatim", body);
 						var mongifiedz = __.map(B, (r) => {
 							var o = {}
 							o.type = "Feature"
@@ -615,7 +615,7 @@ APP.get('/geoms/simple', (req, res) => {
 /* 🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬🛬 */
 
 APP.get('/geoms/:app', (req, res) => {
-		console.log('req', req);
+		// console.log('req', req);
 		res.setHeader('Content-Type', 'application/json');
 		// allow cors
 		res.header("Access-Control-Allow-Origin", "*");
@@ -670,10 +670,10 @@ APP.get('/geoms/:app', (req, res) => {
 				// Connection URL
 				// var url = 'mongodb://app:7GT8Cdl*fq4Z@cl00-shard-00-00-uacod.mongodb.net:27017,cl00-shard-00-01-uacod.mongodb.net:27017,cl00-shard-00-02-uacod.mongodb.net:27017/cbb?authSource=admin&replicaSet=CL00-shard-0&ssl=true';
 			var url = 'mongodb://' + CONFIG.mongo_connect_string + '@cbbcluster0-shard-00-00-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-01-wdqp7.gcp.mongodb.net:27017,cbbcluster0-shard-00-02-wdqp7.gcp.mongodb.net:27017/test?ssl=true&replicaSet=cbbcluster0-shard-0&authSource=admin&retryWrites=true';
-			console.log("url", url);
+			// console.log("url", url);
 			// Use connect method to connect to the Server
 			MONGO.connect(url, (err, client) => {
-				console.log("Connected correctly to server");
+				// console.log("Connected correctly to server");
 				if (err) {
 					console.log('ERROR DOE:', err)
 				}
