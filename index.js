@@ -287,10 +287,10 @@ APP.post('/geocode/batch', async(req, res) => {
 				return o;
 			})
 			let orsp = {
-				"type": "FeatureCollection",
-				"features": reassociated
-			}
-			// console.log("returning orsp:", orsp)
+					"type": "FeatureCollection",
+					"features": reassociated
+				}
+				// console.log("returning orsp:", orsp)
 			res.json(JSON.stringify(orsp)) //send
 		})
 		.catch(function(err) {
@@ -390,11 +390,12 @@ APP.get('/ebl/centerlines', async(req, res) => {
 APP.post('/ebl/submit', async(req, res) => {
 	res.header("Access-Control-Allow-Origin", "*");
 
-	var doc = req.body;
 
+	res.send(__.map(req.body, async(trk, i, l) => {
 
-	let insrt = await _LOGTRACK(doc);
-	res.send(insrt);
+				let insrt = await _LOGTRACK(trk);
+			}) //each.trk
+		) //.send
 });
 
 /*APP.post('/geocode/submitOG/cbb', async (req, res) => {
@@ -438,9 +439,9 @@ APP.get('/geocode/:loc', (req, res) => {
 		// allow cors
 		res.header("Access-Control-Allow-Origin", "*");
 		var Q = {
-			"incoming": req.params.loc
-		}
-		// console.log("Q:", Q)
+				"incoming": req.params.loc
+			}
+			// console.log("Q:", Q)
 		var R = {
 				Q: Q.incoming
 			} //~empty response obj
@@ -735,5 +736,6 @@ APP.get('/missings/:which', (req, res) => {
 		});
 	}) //APP.get
 APP.listen(CONFIG.port)
+console.log(CONFIG);
 console.log(`running at ${CONFIG.port}`);
 exports = module.exports = APP;
