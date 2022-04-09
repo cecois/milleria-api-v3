@@ -6,7 +6,7 @@
     "cors": "^2.8.5",
     "express": "^4.16.2",
     "gpxparser": "^3.0.6",
-    "moment": "^2.23.0",
+    "moment": "^2.29.2",
     "mongodb": "^3.0.1",
     "node-geocoder": "^3.22.0",
     "request": "^2.83.0",
